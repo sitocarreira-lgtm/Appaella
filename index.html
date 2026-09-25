@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Appaella</title>
+<meta name="theme-color" content="#1D5E8C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Appaella">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EDEFF1; --panel:#FFFFFF; --ink:#1E2124; --muted:#5E656C;
+  --iron:#2B2D31; --rice:#E9A81B; --rice-hi:#F6C84B; --socarrat:#8A4A1D;
+  --tile:#1D5E8C; --line:#D5D9DD; --ok:#2E7D4F; --warn:#B26A00; --bad:#B3261E;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181B; --panel:#1F2226; --ink:#ECEEF0; --muted:#9BA3AB;
+    --iron:#0C0D0F; --line:#33383E; --tile:#5FA6D9; --ok:#5FC08A; --warn:#E6A23C; --bad:#F2766B;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181B; --panel:#1F2226; --ink:#ECEEF0; --muted:#9BA3AB;
+  --iron:#0C0D0F; --line:#33383E; --tile:#5FA6D9; --ok:#5FC08A; --warn:#E6A23C; --bad:#F2766B;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  line-height:1.45;-webkit-font-smoothing:antialiased}
+main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 2.5rem}
+h1{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;margin:.25rem 0 .15rem}
+.sub{color:var(--muted);margin:0 0 1rem;font-size:.95rem}
+
+.stage{background:var(--panel);border-radius:18px;padding:1rem 1rem .9rem;border:1px solid var(--line)}
+svg{display:block;width:100%;height:auto}
+.readout{display:flex;align-items:baseline;gap:.5rem;margin-top:.4rem;flex-wrap:wrap}
+.big{font-size:3.2rem;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.unit{font-size:1.2rem;font-weight:600;color:var(--muted)}
+.verdict{font-weight:600;margin:.35rem 0 0}
+.water{display:flex;align-items:baseline;gap:.45rem;margin-top:.9rem;padding-top:.8rem;border-top:1px dashed var(--line);flex-wrap:wrap}
+.water .mid{font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--tile);font-variant-numeric:tabular-nums}
+.verdict.ok{color:var(--ok)} .verdict.warn{color:var(--warn)} .verdict.bad{color:var(--bad)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1rem;margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--line);font-size:.92rem}
+.facts span{display:block;color:var(--muted);font-size:.8rem}
+.facts b{font-variant-numeric:tabular-nums}
+
+.inputs{margin-top:1.1rem;display:grid;gap:1rem}
+.field label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:.35rem}
+.field label output{font-variant-numeric:tabular-nums;color:var(--tile)}
+.row{display:flex;gap:.6rem;align-items:center}
+input[type=range]{flex:1;accent-color:var(--rice);height:28px}
+input[type=number],select{width:6.5rem;font:inherit;font-size:1rem;padding:.45rem .5rem;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+select{width:100%}
+input:focus-visible,select:focus-visible,summary:focus-visible,button:focus-visible{outline:3px solid var(--tile);outline-offset:2px}
+.hint{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+
+details{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:.7rem .9rem}
+summary{cursor:pointer;font-weight:600}
+details .inputs{margin-top:.8rem}
+button.link{background:none;border:0;color:var(--tile);font:inherit;font-size:.85rem;padding:0;cursor:pointer;text-decoration:underline}
+
+.note{font-size:.85rem;color:var(--muted);margin-top:1.2rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Appaella</h1>
+  <p class="sub">Diámetro de la paellera y gramos de arroz. Te dice qué capa de arroz cocido vas a tener y cuánto caldo echar.</p>
+
+  <section class="stage" aria-live="polite">
+    <svg id="pan" viewBox="0 0 360 120" role="img" aria-label="Corte de la paellera con la capa de arroz"></svg>
+    <div class="readout"><span class="big" id="thk">–</span><span class="unit">cm de arroz</span></div>
+    <p class="verdict" id="verdict"></p>
+    <div class="water"><span class="mid" id="agua">–</span><span class="unit">de caldo para cocer el arroz</span></div>
+    <p class="hint" style="margin:.2rem 0 0">Nivel al que hay que echar el arroz. No incluye el caldo para cocer la carne y la verdura.</p>
+    <div class="facts">
+      <div><span>Para 1 cm justo</span><b id="ideal">–</b></div>
+      <div><span>Raciones aprox.</span><b id="rac">–</b></div>
+      <div><span>Base</span><b id="base">–</b></div>
+      <div><span>Volumen de cocción</span><b id="vol">–</b></div>
+      <div><span>Nivel del caldo al echar el arroz</span><b id="nivel">–</b></div>
+      <div><span>Proporción caldo : arroz</span><b id="prop">–</b></div>
+    </div>
+  </section>
+
+  <div class="inputs">
+    <div class="field">
+      <label for="dR">Diámetro superior <output id="dO"></output></label>
+      <div class="row"><input type="range" id="dR" min="22" max="115" step="1"><input type="number" id="dN" min="15" max="200" step="1" inputmode="numeric" aria-label="Diámetro en cm"></div>
+    </div>
+    <div class="field">
+      <label for="rR">Arroz <output id="rO"></output></label>
+      <div class="row"><input type="range" id="rR" min="50" max="3000" step="25"><input type="number" id="rN" min="10" max="10000" step="5" inputmode="numeric" aria-label="Arroz en gramos"></div>
+    </div>
+    <div class="field">
+      <label for="tipo">Tipo de arroz</label>
+      <select id="tipo">
+        <option value="3.4">Bomba</option>
+        <option value="3.0">Senia / Bahía / Albufera</option>
+        <option value="2.7">Redondo genérico</option>
+      </select>
+    </div>
+
+    <details id="adv">
+      <summary>Ajustes de la paellera</summary>
+      <div class="inputs">
+        <div class="field">
+          <label for="bN">Diámetro del fondo en cm</label>
+          <div class="row"><input type="number" id="bN" step="0.5" inputmode="decimal" style="width:100%" placeholder="auto"></div>
+          <p class="hint">Vacío = base de la paellera esmaltada de Paelleros Roger de ese diámetro.</p>
+        </div>
+        <div class="field">
+          <label for="hN">Profundidad en cm</label>
+          <div class="row"><input type="number" id="hN" step="0.5" inputmode="decimal" style="width:100%" placeholder="auto"></div>
+          <p class="hint">Vacío = según ficha Roger.</p>
+        </div>
+        <div class="field">
+          <label for="cR">Calibración <output id="cO"></output></label>
+          <div class="row"><input type="range" id="cR" min="-30" max="30" step="1"></div>
+          <p class="hint">Si tras cocinar mides más grosor del que marca, súbelo; si menos, bájalo.</p>
+        </div>
+        <button class="link" id="reset" type="button">Volver a valores automáticos</button>
+      </div>
+    </details>
+  </div>
+
+  <p class="note">Calcula solo la capa de arroz cocido, sin contar tropezones. Medidas de base: paelleras esmaltadas de Paelleros Roger. Modelo: tronco de cono y volumen de arroz cocido según el tipo. El caldo para cocer el arroz está ajustado a la calculadora de paella10.com con arroz redondo, 10 min de fuego fuerte y 8 moderado. Una paella valenciana clásica anda alrededor de 1 cm.</p>
+</main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const S = {d:55, r:500, tipo:"3.4", base:"", h:"", cal:0};
+  try{ const s = JSON.parse(localStorage.getItem("grosorPaella")||"null"); if(s) Object.assign(S,s); }catch(e){}
+  const save = () => { try{ localStorage.setItem("grosorPaella", JSON.stringify(S)); }catch(e){} };
+
+  const fmt = (n,dec=1) => n.toLocaleString("es-ES",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+
+  // Paellas esmaltadas El Cid / Vaello, Paelleros Roger: [boca, base] en cm
+  const ROGER = [[22,18],[24,20],[38,33],[40,35],[46,41],[50,44.5],[55,48],[65,59],[70,64],[80,73],[90,81],[100,89],[115,103]];
+  // Altura sin asas según ficha técnica: 40 cm → 5 cm, 90 cm → 8 cm
+  const alturaRoger = D => Math.max(3, 5 + (D-40)*0.06);
+  function baseRoger(D){
+    const ex = ROGER.find(p=>p[0]===D);
+    if(ex) return {b:ex[1], src:"Roger"};
+    if(D<ROGER[0][0]) return {b:D*ROGER[0][1]/ROGER[0][0], src:"extrapolado"};
+    const last = ROGER[ROGER.length-1];
+    if(D>last[0]) return {b:D*last[1]/last[0], src:"extrapolado"};
+    for(let i=0;i<ROGER.length-1;i++){
+      const [d0,b0]=ROGER[i],[d1,b1]=ROGER[i+1];
+      if(D>d0&&D<d1) return {b:b0+(b1-b0)*(D-d0)/(d1-d0), src:"interpolado"};
+    }
+  }
+  function geom(){
+    const D = S.d;
+    let b = parseFloat(S.base), src="tu medida";
+    if(!(b>0 && b<D)){ const r=baseRoger(D); b=r.b; src=r.src; }
+    let h = parseFloat(S.h); if(!(h>0)) h = alturaRoger(D);
+    return {D, b, h, R:D/2, rb:b/2, src};
+  }
+  // Volumen (cm³) hasta altura t en un tronco de cono
+  function volAt(t,g){
+    const r = g.rb + (g.R-g.rb)*Math.min(t,g.h)/g.h;
+    let v = Math.PI*Math.min(t,g.h)/3*(g.rb*g.rb + g.rb*r + r*r);
+    if(t>g.h) v += Math.PI*g.R*g.R*(t-g.h); // desborda (teórico)
+    return v;
+  }
+  function thickness(V,g){
+    let lo=0, hi=50;
+    for(let i=0;i<60;i++){ const m=(lo+hi)/2; if(volAt(m,g)<V) lo=m; else hi=m; }
+    return (lo+hi)/2;
+  }
+  const factor = () => parseFloat(S.tipo)*(1+S.cal/100); // ml cocido por g crudo
+
+  function draw(g,t){
+    const svg=$("pan"), W=360, pad=18, maxW=W-2*pad;
+    const sc = maxW/g.D;               // px por cm (ancho)
+    const vs = Math.min(sc*1.6, 60/g.h); // exagera algo la vertical
+    const H = g.h*vs, y0 = 20+H;
+    const cx=W/2, xT=g.R*sc, xB=g.rb*sc;
+    const tt=Math.min(t,g.h), rT = g.rb+(g.R-g.rb)*tt/g.h, xr=rT*sc, yr=y0-tt*vs;
+    const inner = `M${cx-xT},${y0-H} L${cx-xB},${y0} L${cx+xB},${y0} L${cx+xT},${y0-H}`;
+    let grains="";
+    const n = Math.min(90, Math.round(xr*2/7));
+    for(let i=0;i<n;i++){
+      const gx = cx-xr+6+(i*(2*xr-12)/Math.max(1,n-1));
+      const gy = yr + 2 + ((i*37)%7)/7*Math.max(1,(y0-yr-4));
+      if(gy<y0-1) grains += `<ellipse cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" rx="2.6" ry="1.1" fill="var(--rice-hi)" opacity=".7" transform="rotate(${(i*47)%180} ${gx.toFixed(1)} ${gy.toFixed(1)})"/>`;
+    }
+    const over = t>g.h;
+    svg.setAttribute("viewBox",`0 0 ${W} ${y0+26}`);
+    svg.innerHTML = `
+      <defs><clipPath id="cp"><path d="${inner} Z"/></clipPath></defs>
+      <rect x="${cx-xT-14}" y="${y0-H-3}" width="16" height="6" rx="3" fill="var(--iron)"/>
+      <rect x="${cx+xT-2}" y="${y0-H-3}" width="16" height="6" rx="3" fill="var(--iron)"/>
+      <g clip-path="url(#cp)">
+        <rect x="0" y="${yr}" width="${W}" height="${y0-yr}" fill="var(--rice)"/>
+        <rect x="0" y="${y0-Math.min(3,(y0-yr)*.35)}" width="${W}" height="4" fill="var(--socarrat)"/>
+        ${grains}
+      </g>
+      <path d="${inner}" fill="none" stroke="var(--iron)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <line x1="${cx+xr+8}" y1="${yr}" x2="${cx+xr+8}" y2="${y0}" stroke="var(--tile)" stroke-width="1.5" ${over?'stroke-dasharray="3 3"':''}/>
+      <text x="${cx}" y="${y0+18}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="inherit">Ø ${fmt(g.D,0)} cm arriba · fondo ${fmt(g.b,0)} cm · ${fmt(g.h,1)} cm de hondo</text>`;
+  }
+
+  function update(){
+    const g = geom();
+    const V = S.r*factor();
+    const t = thickness(V,g);
+    $("thk").textContent = fmt(t,1);
+    const v=$("verdict");
+    let cls="ok", msg;
+    if(t>g.h){cls="bad";msg="No cabe: el arroz supera el borde.";}
+    else if(t<0.6){cls="warn";msg="Muy fina: se secará antes de hacerse. Riesgo de quemado.";}
+    else if(t<0.85){cls="ok";msg="Fina. Buen socarrat, vigila el fuego.";}
+    else if(t<=1.3){cls="ok";msg="En su punto: capa fina de paella valenciana.";}
+    else if(t<=1.8){cls="warn";msg="Algo gruesa: la capa de arriba tenderá a quedar dura o pasada.";}
+    else {cls="bad";msg="Demasiado gruesa: se cocerá desigual. Usa una paellera más grande.";}
+    v.className="verdict "+cls; v.textContent=msg;
+    const g1 = volAt(1,g)/factor();
+    $("ideal").textContent = Math.round(g1/10)*10+" g";
+    $("rac").textContent = "≈ "+fmt(S.r/100,S.r%100?1:0);
+    $("base").textContent = fmt(g.b,1)+" cm";
+    $("vol").textContent = fmt(V/1000,2)+" L";
+    // Caldo para cocer el arroz, ajustado a paella10 con arroz redondo:
+    //  absorción del grano: 2,0 ml por g
+    //  evaporación por la superficie: 0,17 ml por cm² de boca
+    //  pérdidas por el borde caliente: 5,4 ml por cm de perímetro
+    const REL = {"3.4":1.22,"3.0":1.06,"2.7":1}; // bomba y senia absorben algo más que el redondo
+    const absorbido = 2.0*S.r*(REL[S.tipo]||1);
+    const superficie = 0.17*Math.PI*g.R*g.R;
+    const borde = 5.4*Math.PI*g.D;
+    const L = absorbido + superficie + borde;
+    $("agua").textContent = fmt(L/1000, L<10000?2:1)+" L";
+    $("prop").textContent = fmt(L/S.r,1)+" : 1";
+    const nivel = thickness(L + S.r/1.45, g);
+    $("nivel").textContent = nivel>g.h ? "rebosa" : fmt(nivel,1)+" cm";
+    $("dO").textContent = S.d+" cm"; $("rO").textContent = S.r+" g";
+    $("cO").textContent = (S.cal>0?"+":"")+S.cal+" %";
+    draw(g,t); save();
+  }
+
+  function sync(){
+    $("dR").value=Math.min(115,S.d); $("dN").value=S.d;
+    $("rR").value=Math.min(3000,S.r); $("rN").value=S.r;
+    $("tipo").value=S.tipo; $("bN").value=S.base; $("hN").value=S.h; $("cR").value=S.cal;
+  }
+  const num = (el,min,max,key)=>{ const v=parseFloat(el.value); if(v>=min&&v<=max){S[key]=v; sync(); update();} };
+  $("dR").addEventListener("input",e=>num(e.target,15,200,"d"));
+  $("dN").addEventListener("input",e=>num(e.target,15,200,"d"));
+  $("rR").addEventListener("input",e=>num(e.target,10,10000,"r"));
+  $("rN").addEventListener("input",e=>num(e.target,10,10000,"r"));
+  $("tipo").addEventListener("change",e=>{S.tipo=e.target.value;update();});
+  $("bN").addEventListener("input",e=>{S.base=e.target.value;update();});
+  $("hN").addEventListener("input",e=>{S.h=e.target.value;update();});
+  $("cR").addEventListener("input",e=>{S.cal=parseInt(e.target.value,10);update();});
+  $("reset").addEventListener("click",()=>{S.base="";S.h="";S.cal=0;sync();update();});
+
+  sync(); update();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
