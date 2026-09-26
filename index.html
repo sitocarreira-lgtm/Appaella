@@ -88,7 +88,7 @@ button.link{background:none;border:0;color:var(--tile);font:inherit;font-size:.8
       <div><span>Para 1 cm justo</span><b id="ideal">–</b></div>
       <div><span>Raciones aprox.</span><b id="rac">–</b></div>
       <div><span>Base</span><b id="base">–</b></div>
-      <div><span>Volumen de cocción</span><b id="vol">–</b></div>
+      <div><span>Volumen de arroz</span><b id="vol">–</b></div>
       <div><span>Nivel del caldo al echar el arroz</span><b id="nivel">–</b></div>
       <div><span>Proporción caldo : arroz</span><b id="prop">–</b></div>
     </div>
@@ -186,10 +186,10 @@ button.link{background:none;border:0;color:var(--tile);font:inherit;font-size:.8
   function draw(g,t){
     const svg=$("pan"), W=360, pad=18, maxW=W-2*pad;
     const sc = maxW/g.D;               // px por cm (ancho)
-    const vs = Math.min(sc*1.6, 60/g.h); // exagera algo la vertical
-    const H = g.h*vs, y0 = 20+H;
+    const H = 80, y0 = 20+H; // profundidad dibujada fija
     const cx=W/2, xT=g.R*sc, xB=g.rb*sc;
-    const tt=Math.min(t,g.h), rT = g.rb+(g.R-g.rb)*tt/g.h, xr=rT*sc, yr=y0-tt*vs;
+    const tt=Math.min(t,g.h), fr=Math.pow(tt/g.h,0.8); // escala no lineal: amplía las capas finas
+    const rT = g.rb+(g.R-g.rb)*fr, xr=rT*sc, yr=y0-fr*H;
     const inner = `M${cx-xT},${y0-H} L${cx-xB},${y0} L${cx+xB},${y0} L${cx+xT},${y0-H}`;
     let grains="";
     const n = Math.min(90, Math.round(xr*2/7));
